@@ -14,32 +14,50 @@ const uploadCSV = async (req, res) => {
     
     const parser = parse({
       columns: true,
-      skip_empty_lines: true
+      skip_empty_lines: true,
+      trim: true,
+      delimiter: ',',
+      quote: '"',
+      relax_column_count: true
     });
     
     parser.on('readable', function() {
       let record;
       while (record = parser.read()) {
+        const columns = Object.keys(record);
+        const productNameIndex = columns.indexOf('Product Name');
+        const urlColumns = columns.slice(productNameIndex + 1);
+        const urls = urlColumns.map(col => record[col]).filter(url => url);
+
         records.push({
           serialNumber: parseInt(record['S. No.']),
           productName: record['Product Name'],
-          inputUrls: record['Input Image Urls'].split(',').map(url => url.trim())
+          inputUrls: urls
         });
       }
     });
 
+    parser.on('error', function(err) {
+      console.error('CSV parsing error:', err);
+      res.status(400).json({ error: 'Invalid CSV format' });
+    });
     
     parser.on('end', async function() {
-      const request = new Request({
-        requestId,
-        products: records,
-        webhookUrl: req.body.webhookUrl
-      });
-      await request.save();
-      
-      await imageProcessingQueue.add({ requestId });
-      
-      res.json({ requestId });
+      try {
+        const request = new Request({
+          requestId,
+          products: records,
+          webhookUrl: req.body.webhookUrl
+        });
+        await request.save();
+        
+        await imageProcessingQueue.add({ requestId });
+        
+        res.json({ requestId });
+      } catch (error) {
+        console.error('Error saving request:', error);
+        res.status(500).json({ error: 'Failed to process CSV' });
+      }
     });
     
     parser.write(req.file.buffer.toString());
