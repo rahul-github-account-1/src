@@ -1,0 +1,41 @@
+version: '3'
+services:
+  web:
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/image-processor
+      - REDIS_HOST=redis
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+      - AWS_REGION=${AWS_REGION}
+    depends_on:
+      - mongodb
+      - redis
+
+  worker:
+    build: .
+    command: node workers/imageProcessor.js
+    scale: 3
+    environment:
+      - MONGODB_URI=mongodb://mongodb:27017/image-processor
+      - REDIS_HOST=redis
+      - AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID}
+      - AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY}
+      - S3_BUCKET=${S3_BUCKET}
+      - AWS_REGION=${AWS_REGION}
+    depends_on:
+      - mongodb
+      - redis
+
+  mongodb:
+    image: mongo:latest
+    ports:
+      - "27017:27017"
+
+  redis:
+    image: redis:6-alpine
+    ports:
+      - "6379:6379" 
