@@ -4,6 +4,10 @@ services:
     build: .
     ports:
       - "3000:3000"
+    deploy:
+      resources:
+        limits:
+          memory: 200M
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/image-processor
       - REDIS_HOST=redis
@@ -21,7 +25,10 @@ services:
     build: .
     command: node workers/imageProcessor.js
     deploy:
-      replicas: 3
+      replicas: 1
+      resources:
+        limits:
+          memory: 200M
     environment:
       - MONGODB_URI=mongodb://mongodb:27017/image-processor
       - REDIS_HOST=redis
@@ -37,6 +44,10 @@ services:
 
   mongodb:
     image: mongo:latest
+    deploy:
+      resources:
+        limits:
+          memory: 256M
     ports:
       - "27017:27017"
     volumes:
@@ -45,6 +56,10 @@ services:
 
   redis:
     image: redis:6-alpine
+    deploy:
+      resources:
+        limits:
+          memory: 128M
     ports:
       - "6379:6379"
     restart: unless-stopped
