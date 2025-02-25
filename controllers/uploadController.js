@@ -28,7 +28,6 @@ const uploadCSV = async (req, res) => {
         const productNameIndex = columns.indexOf('Product Name');
         const urlColumns = columns.slice(productNameIndex + 1);
         const urls = urlColumns.map(col => record[col]).filter(url => url);
-
         records.push({
           serialNumber: parseInt(record['S. No.']),
           productName: record['Product Name'],
